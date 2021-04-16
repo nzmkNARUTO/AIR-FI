@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 #define __USE_GNU
 #include <pthread.h>
 #include <sched.h>
-#include "algorithm1/alg1.h"
+int cpus;
 
 pthread_barrier_t barrier;
 void *fun(void *param){
@@ -30,18 +31,18 @@ void *fun(void *param){
 
     pthread_barrier_wait(&barrier);
     start = clock();
-    while (clock()<start+2*CLOCKS_PER_SEC)
+    while (clock()<start+cpus*CLOCKS_PER_SEC)
     {
         i++;
         memcpy(a, b, sizeof(a));
         memcpy(b, a, sizeof(b));
         if(i%100==0)
-            printf("%d\n",i);
+            printf("cpu:%d,%d\n",cpu,i);
     }
 }
 
 int main(int argc, char** argv){
-    int cpus=sysconf(_SC_NPROCESSORS_ONLN);
+    cpus=sysconf(_SC_NPROCESSORS_ONLN);
     printf("cpu count %d\n",cpus);
     // cpu_set_t mask;
     // CPU_ZERO(&mask);
@@ -65,7 +66,7 @@ int main(int argc, char** argv){
             }
         }
         printf("main\n");
-        sleep(2);
+        sleep(1);
         pthread_barrier_wait(&barrier);
         pthread_join(thread,NULL);
     }
