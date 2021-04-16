@@ -19,26 +19,38 @@ void *fun(void *param){
         return;
     }
 
-    int a[1024*256]={1};
-    int b[1024*256]={1};
+    int a[1024*256];
+    int b[1024*256];
+    for(int i=0;i<1024*256;i++){
+        a[i]=1;
+        b[i]=0;
+    }
 	int i = 0;
 	clock_t start;
 
     pthread_barrier_wait(&barrier);
     start = clock();
-    while (clock()<start+1*CLOCKS_PER_SEC)
+    while (clock()<start+2*CLOCKS_PER_SEC)
     {
         i++;
-    	memcpy(a, b, 1024 * 256);
-    	//memset(b, 0, 1024 * 1024);
-    	memcpy(b, a, 1024 * 256);
-        printf("%d\n",i);
+        memcpy(a, b, sizeof(a));
+        memcpy(b, a, sizeof(b));
+        if(i%100==0)
+            printf("%d\n",i);
     }
 }
 
 int main(int argc, char** argv){
     int cpus=sysconf(_SC_NPROCESSORS_ONLN);
     printf("cpu count %d\n",cpus);
+    // cpu_set_t mask;
+    // CPU_ZERO(&mask);
+    // CPU_SET(cpus-1,&mask);
+    // if (sched_setaffinity(0,sizeof(mask),&mask)<0)
+    // {
+    //     printf("main bind error\n");
+    //     return;
+    // }
     int *cpu=(int*)malloc(cpus*sizeof(int));
     for(int i=0;i<cpus;i++){
         cpu[i]=i;
@@ -53,8 +65,8 @@ int main(int argc, char** argv){
             }
         }
         printf("main\n");
+        sleep(2);
         pthread_barrier_wait(&barrier);
         pthread_join(thread,NULL);
-        sleep(1);
     }
 }
