@@ -1,7 +1,7 @@
 from spectrum_file import SpectrumFileReader
 import pickle as cPickle
 import os
-
+import sys
 
 def process(fn):
     print ("processing '%s':" % fn)
@@ -24,4 +24,7 @@ def main():
             process("./spectral_data/"+fn)
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv)!=2:
+        print("usage:")
+        exit()
+    process(sys.argv[1])
