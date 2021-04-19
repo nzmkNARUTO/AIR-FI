@@ -4,7 +4,6 @@ from tqdm import tqdm
 from spectrum_file import SpectrumFileReader
 import pickle as cPickle
 import sys
-import numpy as np
 
 def process(fn):
     rssi_list=[]
@@ -14,7 +13,7 @@ def process(fn):
         try:
             device_id, ts, sample_data = cPickle.load(f)
             for tsf, freq, noise, rssi, pwrs in SpectrumFileReader.decode(sample_data):
-                rssi_list+=[[ts,rssi]]
+                rssi_list+=[rssi]
                 # print (device_id, ts, tsf, freq, noise, rssi)
                 # for carrier_freq, pwr_level in pwrs.items():
                 #     print (carrier_freq, pwr_level)
@@ -39,29 +38,47 @@ def draw_from_dict(dicdata,RANGE,filename):
 
 def analysis(rssi_list,filename):
     print("analysising")
-    rssi={}
     print(len(rssi_list))
-    lasttime=0
-    count=1
-    i=0
-    for line in tqdm(rssi_list):
-        if lasttime==line[0]:
-            try:
-                rssi[i]+=eval(str(line[1]))
-            except:
-                rssi[i]=eval(str(line[1]))
-            count+=1
-            lasttime=line[0]
-        else:
-            try:
-                rssi[i]/=count
-            except:
-                rssi[i]=0
-            count=1
-            lasttime=line[0]
-            i+=1
-    rssi.pop(len(rssi)-1)
-    draw_from_dict(rssi,len(rssi),filename)
+    flag=False
+    # process_bar=tqdm(total=len(rssi_list))
+    start=0
+    while start<(len(rssi_list)/2):#控制起始位置
+        # process_bar.update(1)
+        windows=100
+        while windows<(len(rssi_list)/2):#控制窗口长度
+            bins=[]
+            now=start
+            avg_last=[]
+            seprate=8
+            while now<(len(rssi_list)-windows):#控制当前位置
+                avg=sum(rssi_list[now:now+windows])/windows
+                if avg>seprate:
+                    bins+=[1]
+                else:
+                    bins+=[0]
+                avg_last+=[avg]
+                print('windows:',windows,' start:',start,' now:',now,' avg:',avg,' seprate',seprate,' bins',bins)
+                if len(bins)==8:
+                    if bins[0]!=1 or bins[1]!=0 or bins[2]!=1 or bins[3]!=0 or\
+                        bins[4]!=1 or bins[5]!=0 or bins[6]!=1 or bins[7]!=0:
+                        bins.pop(0)
+                        avg_last.pop(0)
+                    else:
+                        flag=True
+                        seprate=sum(avg_last)/len(avg_last)
+                now+=windows
+            if flag:
+                break
+            windows+=100
+        if flag:
+            break
+        start+=100
+        # print(windows)
+    print(bins)
+    # process_bar.close()
+
+    plt.bar(range(len(rssi_list)),rssi_list)
+    plt.savefig("./test.jpg")
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
