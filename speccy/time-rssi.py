@@ -40,7 +40,7 @@ def analysis(rssi_list,seprate):
     print(tempbins)
     for i in range(len(tempbins)):
         if tempbins[i][0]==0:
-            times=tempbins[i][1]/(windows0*0.85)
+            times=tempbins[i][1]/(windows0*0.8)
         else:
             times=tempbins[i][1]/(windows1*0.85)
         if times>2:
@@ -54,7 +54,7 @@ def analysis(rssi_list,seprate):
     print(bins)
 
 rssi_list=[]
-f = open("./spectral_data/neu!1.bin", 'rb')
+f = open("./spectral_data/neu!1+100.bin", 'rb')
 while True:
     try:
         device_id, ts, sample_data = cPickle.load(f)
