@@ -71,7 +71,7 @@ int main(int argc, char** argv){
                 pthread_join(thread,NULL);
             }else{
                 printf("0");
-                usleep(1000000+100000);
+                usleep(1000000+250000);
             }
             currentChar=currentChar<<1;
         }
