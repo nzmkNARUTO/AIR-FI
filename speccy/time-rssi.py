@@ -1,87 +1,69 @@
+from os import sep
 from matplotlib import pyplot as plt
-import sys
-from tqdm import tqdm
 from spectrum_file import SpectrumFileReader
 import pickle as cPickle
-import sys
+from scipy.signal import savgol_filter
 
-def process(fn):
-    rssi_list=[]
-    print ("processing '%s':" % fn)
-    f = open(fn, 'rb')
-    while True:
-        try:
-            device_id, ts, sample_data = cPickle.load(f)
-            for tsf, freq, noise, rssi, pwrs in SpectrumFileReader.decode(sample_data):
-                rssi_list+=[rssi]
-                # print (device_id, ts, tsf, freq, noise, rssi)
-                # for carrier_freq, pwr_level in pwrs.items():
-                #     print (carrier_freq, pwr_level)
-        except EOFError:
-            break
-    analysis(rssi_list,fn)
-
-def draw_from_dict(dicdata,RANGE,filename):
-    print("\ndrawing")
-    #dicdata：字典的数据。
-    #RANGE：截取显示的字典的长度。
-    #heng=0，代表条状图的柱子是竖直向上的。heng=1，代表柱子是横向的。考虑到文字是从左到右的，让柱子横向排列更容易观察坐标轴。
-    by_value = sorted(dicdata.items(),key = lambda item:item[1],reverse=True)
-    x = []
-    y = []
-    for d in by_value:
-        x.append(d[0])
-        y.append(d[1])
-
-    plt.bar(x[0:RANGE], y[0:RANGE])
-    plt.savefig("./"+str(filename).replace(".bin",".jpg"))
-
-def analysis(rssi_list,filename):
+def analysis(rssi_list,seprate):
     print("analysising")
     print(len(rssi_list))
-    flag=False
-    # process_bar=tqdm(total=len(rssi_list))
-    start=0
-    while start<(len(rssi_list)/2):#控制起始位置
-        # process_bar.update(1)
-        windows=100
-        while windows<(len(rssi_list)/2):#控制窗口长度
-            bins=[]
-            now=start
-            avg_last=[]
-            seprate=8
-            while now<(len(rssi_list)-windows):#控制当前位置
-                avg=sum(rssi_list[now:now+windows])/windows
-                if avg>seprate:
-                    bins+=[1]
-                else:
-                    bins+=[0]
-                avg_last+=[avg]
-                print('windows:',windows,' start:',start,' now:',now,' avg:',avg,' seprate',seprate,' bins',bins)
-                if len(bins)==8:
-                    if bins[0]!=1 or bins[1]!=0 or bins[2]!=1 or bins[3]!=0 or\
-                        bins[4]!=1 or bins[5]!=0 or bins[6]!=1 or bins[7]!=0:
-                        bins.pop(0)
-                        avg_last.pop(0)
-                    else:
-                        flag=True
-                        seprate=sum(avg_last)/len(avg_last)
-                now+=windows
-            if flag:
-                break
-            windows+=100
-        if flag:
+    tempbins=[]
+    count=0
+    for i in range(len(rssi_list)-1):
+        if rssi_list[i]==rssi_list[i+1]:
+            count+=1
+        else:
+            if rssi_list[i]>seprate:
+                tempbins+=[[1,count]]
+            else:
+                tempbins+=[[0,count]]
+            count=0
+    for i in range(len(tempbins)-8):
+        if tempbins[0][0]!=1 or tempbins[1][0]!=0 or tempbins[2][0]!=1 or tempbins[3][0]!=0 or\
+            tempbins[4][0]!=1 or tempbins[5][0]!=0 or tempbins[6][0]!=1 or tempbins[7][0]!=0:
+            tempbins.pop(0)
             break
-        start+=100
-        # print(windows)
+    windows=tempbins[0][1] + tempbins[1][1] + tempbins[2][1] + tempbins[3][1] +\
+            tempbins[4][1] + tempbins[5][1] + tempbins[6][1] + tempbins[7][1]
+    windows/=8
+    windows=int(windows)
+    bins=[]
+    for i in range(len(tempbins)):
+        times=tempbins[i][1]/windows
+        if times>1.2:
+            for i in range(int(times)):
+                bins+=[tempbins[i][0]]
+        else:
+            bins+=[tempbins[i][0]]
     print(bins)
-    # process_bar.close()
 
-    plt.bar(range(len(rssi_list)),rssi_list)
-    plt.savefig("./test.jpg")
-
-if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print ("\nUsage: \n  $python analysis.py filename\n")
-        exit(0)
-    process(sys.argv[1])
+rssi_list=[]
+f = open("./spectral_data/vm0.5.bin", 'rb')
+while True:
+    try:
+        device_id, ts, sample_data = cPickle.load(f)
+        for tsf, freq, noise, rssi, pwrs in SpectrumFileReader.decode(sample_data):
+            rssi_list+=[rssi]
+            # print (device_id, ts, tsf, freq, noise, rssi)
+            # for carrier_freq, pwr_level in pwrs.items():
+            #     print (carrier_freq, pwr_level)
+    except EOFError:
+        break
+f.close()
+print(len(rssi_list))
+y = savgol_filter(rssi_list, 1801, 2)
+x=range(len(y))
+tempbins=[]
+max_y=max(y)
+min_y=min(y)
+seprate=(max_y+min_y)/2
+for i in range(len(y)):
+    if y[i]>seprate:
+        tempbins+=[max_y]
+    else:
+        tempbins+=[min_y]
+plt.plot(x,rssi_list)
+plt.plot(x,y, color='green')
+plt.plot(x,tempbins,color='red')
+plt.savefig("./test.jpg")
+analysis(tempbins,seprate)

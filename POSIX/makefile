@@ -1,2 +1,2 @@
 all:
-	gcc cpu.c -o cpu -lpthread
+	gcc cpu.c alg1.c -o cpu -lpthread

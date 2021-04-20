@@ -1,6 +1,13 @@
 #include "alg1.h"
-
-
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#define __USE_GNU
+#include <pthread.h>
+#include <sched.h>
+int cpus;
+pthread_barrier_t barrier;
 /* CRC8 */
 char CRC8(char * data, int len)
 {
@@ -25,7 +32,7 @@ char CRC8(char * data, int len)
 #define PACKLEN 6/sizeof(char)    // length of whole (char) packet = header(1 byte) + payload(4 bytes) + CRC(1 byte)
 
 /* add header & CRC to 4-byte payload, forming 1 char packet */
-char * packet(char * payload)
+char* packet(char * payload)
 {
 	int i;    // index
 	char * pack = (char *) malloc(sizeof(char) * PACKLEN);    // pointer of current packet
@@ -59,9 +66,11 @@ long getCurrentTimeMillis()
 void modulateRAM(char * pack, int bitTimeMillis)
 {
 	// arrays to copy
-	int arr1[1024*256] = {1};
-	int arr2[1024*256] = {1};
-
+#define arrlen 1024 * 1024 / sizeof(int)
+	int arr1[arrlen];
+	int arr2[arrlen];
+	memset(arr1,1,sizeof(arr1));
+	memset(arr2,0,sizeof(arr2));
 	long bitEndTime = getCurrentTimeMillis();
 
 	char currentChar;
@@ -72,8 +81,8 @@ void modulateRAM(char * pack, int bitTimeMillis)
 			bitEndTime += bitTimeMillis;
 			if (currentChar & 0x80)    // current bit is 1
 				while (getCurrentTimeMillis() < bitEndTime) {
-					memcpy(arr1, arr2, 1024*256);
-					memcpy(arr2, arr1, 1024*256);
+					memcpy(arr1, arr2, sizeof(arr1));
+					memcpy(arr2, arr1, sizeof(arr2));
 				}
 			else    // current bit is 0
 				sleep(bitTimeMillis / 1000);
@@ -84,21 +93,9 @@ void modulateRAM(char * pack, int bitTimeMillis)
 
 
 
-/*
-	input string
-	-> fill if not divisible
-	-> make packets and modulate
-*/
-void alg1()
+/* fill if not divisible -> make packets and modulate */
+void alg1(char * data_char, int bitTimeMillis)
 {
-	/* ----------------- Input a String shorter than DATAMAX characters ------------------------- */
-
-#define DATAMAX 100
-	printf("Input a string:\n");
-	char data_char[DATAMAX];    // array of whole secret data (payload in all packets)
-	gets(data_char);
-
-
 	/* -------------------------- Fill with '\0' if Not Divisible ------------------------------ */
 
 	int char_per_pack = 4 / sizeof(char);    // number of payload char in every packet
@@ -115,15 +112,14 @@ void alg1()
 
 	int packnum = data_char_len / char_per_pack;    // number of packets
 
-
-	/* -------------------------- Make Packets and Modulate --------------------------------- */
+	/* ----------------------------- Make Packets and Modulate --------------------------------- */
 
 	char * payload = data_char;    // pointer of payload (payload only) in current packet
 	char * pack = NULL;    // pointer of current packet (need header and CRC)
 
 	for (int n = 0; n < packnum; n++) {
 		pack = packet(payload);
-		modulateRAM(pack, 500);
+		modulateRAM(pack, bitTimeMillis);
 		payload = payload + 4;    // next packet
 		free(pack);
 	}

@@ -55,8 +55,12 @@ void modulateRAM(char * pack, int bitTimeMillis);
 
 /*
 	@brief:
-		input string -> fill if not divisible -> make packets and modulate
+		fill data_char with '\0' if the number of char is not divisible -> make packets and modulate
+	@param:
+		data_char - the secret data to be exfiltrated, also payload of all packets
+		bitTimeMillis - bit period in millisecond, used in modulateRAM()
 */
-void alg1();
+void alg1(char * data_char, int bitTimeMillis);
+
 
 
