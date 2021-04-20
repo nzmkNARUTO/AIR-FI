@@ -35,12 +35,13 @@ def analysis(rssi_list,seprate):
     windows0/=3
     windows1=int(windows1)
     windows0=int(windows0)
+    # windows0=windows1=(windows0+windows1)/2
     print(windows1,' ',windows0)
     bins=[]
     print(tempbins)
     for i in range(len(tempbins)):
         if tempbins[i][0]==0:
-            times=tempbins[i][1]/(windows0*0.8)
+            times=tempbins[i][1]/(windows0*0.85)
         else:
             times=tempbins[i][1]/(windows1*0.85)
         if times>2:
@@ -54,7 +55,7 @@ def analysis(rssi_list,seprate):
     print(bins)
 
 rssi_list=[]
-f = open("./spectral_data/neu!1+100.bin", 'rb')
+f = open("./spectral_data/jdm1+250.bin", 'rb')
 while True:
     try:
         device_id, ts, sample_data = cPickle.load(f)
@@ -67,7 +68,7 @@ while True:
         break
 f.close()
 print(len(rssi_list))
-y = savgol_filter(rssi_list, 1001,2)
+y = savgol_filter(rssi_list, 10001,2)
 x=range(len(y))
 tempbins=[]
 max_y=max(y)
