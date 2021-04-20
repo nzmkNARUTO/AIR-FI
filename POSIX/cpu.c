@@ -54,7 +54,7 @@ int main(int argc, char** argv){
     scanf("%s",payload);
     char *p=packet(payload);
     char currentChar;
-    for(int i=0;i<6;i++){
+    for(int i=0;i<5;i++){
         currentChar=p[i];
         for(int j=0;j<8;j++){
             if(currentChar&0x80){

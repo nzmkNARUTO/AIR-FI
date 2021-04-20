@@ -42,11 +42,11 @@ char* packet(char * payload)
 	pack[0] = 0xaa;
 
 	/* payload (32 bits) */
-	for (i = 1; i < 5; i++)
+	for (i = 1; i < 4; i++)
 		pack[i] = payload[i-1];
 
 	/* CRC-8 */
-	pack[5] = CRC8(pack, 5);
+	pack[4] = CRC8(pack, 4);
 
 	return pack;
 }
