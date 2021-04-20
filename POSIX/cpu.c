@@ -32,7 +32,7 @@ void *fun(void *param){
 
     pthread_barrier_wait(&barrier);
     start = clock();
-    while (clock()<start+cpus*CLOCKS_PER_SEC/2)
+    while (clock()<start+cpus*CLOCKS_PER_SEC)
     {
         i++;
         memcpy(a, b, sizeof(a));
@@ -71,7 +71,7 @@ int main(int argc, char** argv){
                 pthread_join(thread,NULL);
             }else{
                 printf("0");
-                usleep(1000000/2+100000);
+                usleep(1000000+100000);
             }
             currentChar=currentChar<<1;
         }
