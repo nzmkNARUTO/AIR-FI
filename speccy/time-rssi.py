@@ -1,4 +1,4 @@
-from os import sep
+import sys
 from matplotlib import pyplot as plt
 from spectrum_file import SpectrumFileReader
 import pickle as cPickle
@@ -54,35 +54,42 @@ def analysis(rssi_list,seprate):
             bins+=[tempbins[i][0]]
     print(bins)
 
-rssi_list=[]
-f = open("./spectral_data/jdm1+250.bin", 'rb')
-while True:
-    try:
-        device_id, ts, sample_data = cPickle.load(f)
-        for tsf, freq, noise, rssi, pwrs in SpectrumFileReader.decode(sample_data):
-            rssi_list+=[rssi]
-            # print (device_id, ts, tsf, freq, noise, rssi)
-            # for carrier_freq, pwr_level in pwrs.items():
-            #     print (carrier_freq, pwr_level)
-    except EOFError:
-        break
-f.close()
-print(len(rssi_list))
-y = savgol_filter(rssi_list, 10001,2)
-x=range(len(y))
-tempbins=[]
-max_y=max(y)
-min_y=min(y)
-seprate=(max_y+min_y)/2
-print(seprate)
-# seprate=5
-for i in range(len(y)):
-    if y[i]>seprate:
-        tempbins+=[max_y]
-    else:
-        tempbins+=[min_y]
-plt.plot(x,rssi_list)
-plt.plot(x,y, color='green')
-plt.plot(x,tempbins,color='red')
-plt.savefig("./test.jpg")
-analysis(tempbins,seprate)
+def process(filename):
+    rssi_list=[]
+    f = open(filename, 'rb')
+    while True:
+        try:
+            device_id, ts, sample_data = cPickle.load(f)
+            for tsf, freq, noise, rssi, pwrs in SpectrumFileReader.decode(sample_data):
+                rssi_list+=[rssi]
+                # print (device_id, ts, tsf, freq, noise, rssi)
+                # for carrier_freq, pwr_level in pwrs.items():
+                #     print (carrier_freq, pwr_level)
+        except EOFError:
+            break
+    f.close()
+    print(len(rssi_list))
+    y = savgol_filter(rssi_list, 10001,2)
+    x=range(len(y))
+    tempbins=[]
+    max_y=max(y)
+    min_y=min(y)
+    seprate=(max_y+min_y)/2
+    print(seprate)
+    # seprate=5
+    for i in range(len(y)):
+        if y[i]>seprate:
+            tempbins+=[max_y]
+        else:
+            tempbins+=[min_y]
+    plt.plot(x,rssi_list)
+    plt.plot(x,y, color='green')
+    plt.plot(x,tempbins,color='red')
+    plt.savefig(str(filename).replace('bin','jpg'))
+    analysis(tempbins,seprate)
+
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print ("\nUsage: \n  $python analysis.py filename\n")
+        exit(0)
+    process(sys.argv[1])
