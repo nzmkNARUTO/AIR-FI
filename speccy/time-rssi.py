@@ -49,7 +49,7 @@ def analysis(rssi_list,seprate):
     print(bins)
 
 rssi_list=[]
-f = open("./spectral_data/neu!0.5.bin", 'rb')
+f = open("./spectral_data/neu!1+100.bin", 'rb')
 while True:
     try:
         device_id, ts, sample_data = cPickle.load(f)
