@@ -1,3 +1,4 @@
-a=[0,1,0,3,0,5]
-a=[i for i in a if i>0]
-print(a)
+list1 = [1,2,3,4,5]
+list1 = [ str(x) for x in list1 ]
+list1=''.join(list1)
+print(list1)

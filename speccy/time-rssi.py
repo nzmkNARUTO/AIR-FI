@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 from spectrum_file import SpectrumFileReader
 import pickle as cPickle
 from scipy.signal import savgol_filter
+from jiema import decode
 
 def analysis(rssi_list,seprate):
     print("analysising")
@@ -21,7 +22,7 @@ def analysis(rssi_list,seprate):
         tempbins+=[[1,count]]
     else:
         tempbins+=[[0,count]]
-    print(tempbins)
+    # print(tempbins)
     tempbins=[i for i in tempbins if i[1]>500]
     for i in range(len(tempbins)-8):
         if tempbins[0][0]!=1 or tempbins[1][0]!=0 or tempbins[2][0]!=1 or tempbins[3][0]!=0 or\
@@ -36,9 +37,9 @@ def analysis(rssi_list,seprate):
     windows1=int(windows1)
     windows0=int(windows0)
     # windows0=windows1=(windows0+windows1)/2
-    print(windows1,' ',windows0)
+    # print(windows1,' ',windows0)
     bins=[]
-    print(tempbins)
+    # print(tempbins)
     for i in range(len(tempbins)):
         if tempbins[i][0]==0:
             times=tempbins[i][1]/(windows0*0.85)
@@ -46,13 +47,16 @@ def analysis(rssi_list,seprate):
             times=tempbins[i][1]/(windows1*0.85)
         if times>2:
             for j in range(int(times)):
-                print(tempbins[i])
+                # print(tempbins[i])
                 bins+=[tempbins[i][0]]
         elif times<0.3:
             continue
         else:
             bins+=[tempbins[i][0]]
+    bins=[str(x) for x in bins[:40]]
+    bins=''.join(bins)
     print(bins)
+    decode(bins)
 
 def process(filename):
     rssi_list=[]
@@ -75,7 +79,7 @@ def process(filename):
     max_y=max(y)
     min_y=min(y)
     seprate=(max_y+min_y)/2
-    print(seprate)
+    # print(seprate)
     # seprate=5
     for i in range(len(y)):
         if y[i]>seprate:
